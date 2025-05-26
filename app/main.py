@@ -1,7 +1,9 @@
+import os
 from fastapi import FastAPI
 
 app = FastAPI()
 
 @app.get("/")
 def read_root():
-    return {"message": "Hello from FastAPI on Kubernetes!"}
+    message = os.environ.get("APP_MESSAGE", "🔧 기본 메시지입니다.")
+    return {"message": message}
