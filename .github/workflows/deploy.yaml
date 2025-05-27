@@ -1,0 +1,38 @@
+name: CI/CD to Minikube
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  IMAGE_NAME: dewey9/fastapi-k8s-app
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Build Docker image
+      run: docker build -t $IMAGE_NAME:$IMAGE_TAG .
+
+    - name: Push Docker image
+      run: docker push $IMAGE_NAME:$IMAGE_TAG
+
+    - name: Set up kubectl
+      run: |
+        mkdir -p ~/.kube
+        echo "${{ secrets.KUBE_CONFIG }}" > ~/.kube/config
+
+    - name: Update Kubernetes Deployment
+      run: |
+        kubectl set image deployment/fastapi-deployment fastapi=$IMAGE_NAME:$IMAGE_TAG

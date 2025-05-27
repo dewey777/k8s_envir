@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-deployment
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3  # 롤백 전략을 위한 히스토리 보관
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: fastapi
+  template:
+    metadata:
+      labels:
+        app: fastapi
+    spec:
+      containers:
+        - name: fastapi
+          image: dewey9/fastapi-k8s-app:latest  # 또는 GitHub Actions에서 SHA 해시로 태깅됨
+          imagePullPolicy: Always  # 외부 레지스트리 이미지 자동 갱신을 위해 Always 설정
+          ports:
+            - containerPort: 8000
+          env:
+            - name: APP_MESSAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: fastapi-config
+                  key: APP_MESSAGE
+            - name: APP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: fastapi-secret
+                  key: APP_SECRET
